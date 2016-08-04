@@ -3,3 +3,4 @@
 .ipynb*
 test/bin
 test/temp
+bin/
