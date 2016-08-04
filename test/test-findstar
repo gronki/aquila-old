@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo fit/al1.fit | ../bin/aqfindstar > temp/aa
+
+ipython --pylab test-findstar.py
