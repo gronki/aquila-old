@@ -5,7 +5,7 @@ program program_aqfindstar
 
     implicit none
 
-    real(real32), allocatable :: img(:,:), img2(:,:), data(:,:,:)
+    real(real32), allocatable :: img(:,:), img2(:,:), imdata(:,:,:)
     type(starstruct) :: list(2**16)
     integer :: i
 
@@ -39,20 +39,22 @@ program program_aqfindstar
     end if
 
     ! allocate a generic 3D array
-    allocate( data(sz(1),sz(2),sz(3)) )
-    ! read the data from file
-    call ftgpve(33,1,1,product(sz),0,data,anyf,status)
+    allocate( imdata(sz(1),sz(2),sz(3)) )
+    ! read the imdata from file
+    call ftgpve(33,1,1,product(sz),0,imdata,anyf,status)
     call ftclos(33,status)
 
     ! print *,sz
     allocate( img(sz(1),sz(2)), img2(sz(1),sz(2)) )
 
+    img(:,:) = imdata(:,:,1)
+
 
 
     call wavelet_kernel(krn,3.0)
     call convol_dumb_trim(img,krn,img2 )
-    thr = sum(img2**2) / ( product(sz) )
-    ! thr = maxval(img2) * 0.025
+    ! thr = sum(img2**2) / ( product(sz) )
+    thr = maxval(img2) * 0.025
     where (img2 .lt. thr)  img2 = 0
     call aqfindstar(img2,list)
     deallocate(img2)
