@@ -175,8 +175,8 @@ contains
         real, intent(out) ::mx(6,2)
         integer :: nstar0,nstar,ii,i
         integer, parameter :: i_x = 1, i_y = 2, i_r = 3
-        double precision :: y0, y0_dv(3), y0n_dv(3), v0(3)
-        double precision :: lam, lambdas(100), y_dlam, len0, r0
+        real(dp) :: y0, y0_dv(3), y0n_dv(3), v0(3)
+        real(dp) :: lam, lambdas(100), y_dlam, len0, r0
 
         forall (i = 1:size(lambdas))
             lambdas(i) = 1.1 * (i-1.0)/(size(lambdas)-1.0) - 0.1
@@ -218,12 +218,12 @@ contains
     contains
 
         subroutine minimi(x,scale)
-            double precision, intent(inout) :: x
+            real(dp), intent(inout) :: x
             real, intent(in) :: scale
             integer :: i, ii
-            double precision :: dx
+            real(dp) :: dx
             integer, parameter :: n1 = 13
-            double precision :: v(3), y, y_dv(3), y_dx
+            real(dp) :: v(3), y, y_dv(3), y_dx
             logical :: success
             success = .false.
 
@@ -253,9 +253,9 @@ contains
         end subroutine
 
         subroutine comp_ydv(v,y,y_dv)
-            double precision, intent(in) :: v(3)
-            double precision, intent(out) :: y,y_dv(3)
-            double precision :: aa, y_dx1, y_dy1, x1_dr, y1_dr
+            real(dp), intent(in) :: v(3)
+            real(dp), intent(out) :: y,y_dv(3)
+            real(dp) :: aa, y_dx1, y_dy1, x1_dr, y1_dr
             integer :: i0,i
             y = 0
             y_dv = 0
@@ -282,7 +282,7 @@ contains
         end subroutine
 
         subroutine v2mx(v,mx)
-            double precision, intent(in) :: v(3)
+            real(dp), intent(in) :: v(3)
             real, intent(out) :: mx(6,2)
             mx = 0
             mx(1,1) = v(1)
@@ -295,13 +295,29 @@ contains
 
     end subroutine
 
-    elemental function mexha(x,y,sg) result(y)
-        double precision, intent(in) :: x,y,sg
-        double precision :: y,k
-        double precision, parameter :: pi = 4 * atan(1d0)
+    elemental function mexha(x,y,sg) result(yf)
+        real, intent(in) :: x,y,sg
+        real :: yf,k
+        real(dp), parameter :: pi = 4 * atan(1d0)
         k = (x**2 + y**2) / (2 * sg**2)
-        y =  (1 - k)  / (pi * sg**4 )  * exp( -k )
+        yf =  (1 - k)  / (pi * sg**4 )  * exp( -k )
     end function
+
+    subroutine wavelet_kernel(k,sg)
+        real, intent(in) :: sg
+        real, intent(out) :: k(:,:)
+        integer :: szx,szy,i,j
+        real :: x,y
+        szx = size(k,1)
+        szy = size(k,2)
+        do j = 1,szy
+            do i = 1,szx
+                x = i - 0.5*(szx+1)
+                y = j - 0.5*(szy+1)
+                k(i,j) = mexha(x,y,sg)
+            end do
+        end do
+    end subroutine
 
 
 end module
