@@ -1,2 +1,5 @@
 *.o
 *.mod
+.ipynb*
+test/bin
+test/temp
