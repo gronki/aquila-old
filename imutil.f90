@@ -349,6 +349,29 @@ contains
         end do
 
     end subroutine
+    subroutine convol_dumb_trim(img,krn,imgout)
+        real, intent(in) :: img(:,:), krn(:,:)
+        real, intent(out) :: imgout(size(img,1),size(img,2))
+        integer :: x,y,szx,szy, rx, ry
+        integer ::  x1, y1, x2, y2
+        integer ::  x1k, y1k, x2k, y2k
+        szx = size(img,1)
+        szy = size(img,2)
+        kx = size(krn,1)
+        ky = size(krn,2)
+        if ( mod(kx,2) .eq. 0 .or. mod(ky,2) .eq. 0 ) then
+            stop "Kernel must have uneven dimension"
+        end if
+        imgout = 0
+        rx = floor(kx * 0.5)
+        ry = floor(ky * 0.5)
+        do y=1+ry,szy-ry
+            do x=1+rx,szx-rx
+                imgout(x,y) = sum( krn * img((x-rx):(x+rx),(y-ry):(y+ry)) )
+            end do
+        end do
+
+    end subroutine
 
 
 end module
