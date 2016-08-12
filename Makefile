@@ -2,16 +2,21 @@ prefix=/usr
 bindir=$(prefix)/bin
 datadir=$(prefix)/share
 
-FFLAGS=-O3 -ffast-math -march=native -g -fbacktrace
+# FFLAGS=-O3 -ffast-math -march=native -g -fbacktrace
+FFLAGS=-O3 -g -fbacktrace
 
 build: bin/aqfindstar
 
-bin/aqfindstar: bin/%: imutil.o %.f90
+bin/aqfindstar: bin/%: findstar.o filters.o utils.o types.o %.f90
 	mkdir -p bin
-	gfortran -o $@ -lcfitsio $^
+	gfortran -o $@ $(FFLAGS) -lcfitsio $^
 
-imutil.o: imutil.f90
-	gfortran -c -o $@ $^
+types.o: %.o: %.f90
+	gfortran -c -o $@ $(FFLAGS) $^
+utils.o: %.o: %.f90 types.o
+	gfortran -c -o $@ $(FFLAGS) $^
+findstar.o filters.o align.o: %.o: %.f90 types.o utils.o
+	gfortran -c -o $@ $(FFLAGS) $^
 
 installdir:
 	install -dvZ $(DESTDIR)$(datadir)/aquila

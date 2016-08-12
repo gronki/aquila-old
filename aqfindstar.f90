@@ -1,6 +1,7 @@
 program program_aqfindstar
 
-    use imutil
+    use findstar
+    use filters
     use iso_fortran_env
 
     implicit none
@@ -15,7 +16,7 @@ program program_aqfindstar
     character(len=50) :: errstr, comment
     character(len=1200) :: fn
     character(len=1200) :: buf
-    real :: krn(25,25), thr
+    real :: krn(25,25), thr, mean
     read (*,'(A)') fn
     ! print *,trim(fn)
     status = 0
@@ -30,10 +31,14 @@ program program_aqfindstar
 
     call ftgidm(33,ndim,status)
     if ( ndim .eq. 2 ) then
+        write(0,*) 'Got monochrome image'
         call ftgisz(33,2,sz(1:2),status)
+        write(0,'(I20,A,I0)') sz(1), ' x ', sz(2)
         sz(3) = 1
     else if ( ndim .eq. 3 ) then
+        write(0,*) 'Got color image'
         call ftgisz(33,3,sz,status)
+        write(0,'(I20,A,I0,A,I0)') sz(1), ' x ', sz(2), ' x ', sz(3)
     else
         stop "Unknown image dimension"
     end if
@@ -44,17 +49,14 @@ program program_aqfindstar
     call ftgpve(33,1,1,product(sz),0,imdata,anyf,status)
     call ftclos(33,status)
 
-    ! print *,sz
-    allocate( img(sz(1),sz(2)), img2(sz(1),sz(2)) )
-
-    img(:,:) = imdata(:,:,1)
-
-
-
+    allocate( img(sz(1),sz(2)) )
+    allocate( img2(sz(1),sz(2)) )
     call wavelet_kernel(krn,3.0)
+    img(:,:) = imdata(:,:,1)
     call convol_dumb_trim(img,krn,img2 )
-    ! thr = sum(img2**2) / ( product(sz) )
-    thr = maxval(img2) * 0.025
+    mean = sum(img2) / product(sz)
+    thr = sqrt(sum( (img2-mean)**2 ) / product(sz)) + mean
+    ! thr = maxval(img2) * 0.025
     where (img2 .lt. thr)  img2 = 0
     call aqfindstar(img2,list)
     deallocate(img2)
@@ -67,4 +69,13 @@ program program_aqfindstar
         write (6,'(3F15.2)') list(i) % v, list(i) % x, list(i) % y
     end do
     deallocate(img)
+
+contains
+
+    subroutine aqfindstar_wrapper(img)
+        real(real32), intent(in) :: img(:,:)
+        integer, parameter :: krnsz = 17
+        real(real32) :: img2(size(img,1),size(img,2)), krn(krnsz,krnsz)
+    end subroutine
+
 end program
